@@ -1,0 +1,151 @@
+---
+title: "Module 5"
+author: "Ritika Lama"
+date: "2024-10-19"
+output: pdf_document
+---
+
+
+The mtcars dataset is a built-in data set in R. Use ?mtcars to read the description. We will (initially) be interested in predicting the miles per gallon (mpg) from the engine displacement (disp), horse power (hp), rear axle ratio (drat), weight (wt), and acceleration (qsec). (You may want to explore this data graphically.) Using this data, answer the following questions.
+
+**1.Perform the regression of mpg on disp, hp, drat, wt, and qsec. Produce the coefficients table and ANOVA table from R. (5 pts)**
+
+```{r mpg, echo = FALSE}
+  model <- lm(mpg~disp+hp+drat+wt+qsec, data = mtcars)
+  summary(model)$coefficients
+  anova(model)
+```
+
+**2.What are the VIFs for the explanatory variables in this model? Are there any indications of multicollinearity? (5 pts)**
+
+```{r vifs, echo = FALSE}
+  library(car)
+  vif(model)
+```
+The VIF values for displacement is 9.11 and weight is 7.013. It indicates high level of multicollinearity as those values are closer to 10.The VIF values for horse power, rear axle ratio, and acceleration are 5.20, 2.32, and 3.19 which indicates little to no multicollinearity.
+ 
+**3.Consider a reduced model that includes only weight (wt). Use a partial F test at significance level 0.05 to determine whether the variables disp, hp, drat, and qsec are needed in the full model. Be sure to explicitly state your F statistic and p-value. (5 pts)**
+
+```{r partial-test, echo = FALSE}
+  model1 <- lm(mpg ~ wt, data= mtcars)
+  anova(model1, model)
+```
+The F statistic value is 4.1336 and p-value is 0.01007. The p-value is less than significance level of 0.05, hence we reject null hypothesis, indicating that the the variables disp, hp, drat, and qsec are needed in the full model. 
+
+ 
+**4. Construct residual plots to check the assumptions of linearity, constant variation and normality in the full model with disp, hp, drat, wt, and qsec. What do you conclude about whether these assumptions are meet? (10 pts)**
+
+```{r residual-plot, echo = FALSE}
+  
+  par(mfrow = c(2, 2)) 
+  plot(model)
+
+```
+Residuals Vs Fitted: The residuals are randomly scattered around the horizontal line, which suggests that linearity is approximately met. However, there is some pattern-again some curvature-which could mean some non-linearity here, at most mild.
+
+Q-Q Residuals: The points are mostly on the diagonal line. In some sense, the residuals can be said to be normally distributed. Is a very slight deviation at tails might indicate minor departures from normality.
+
+Scale-Location: The scatter of the residuals around the vertical axis is approximately constant for a range of fitted values along the horizontal axis. There is some increase in spread, but overall, this plot supports the homoscedasticity assumption with, at most, minor violation.
+
+Residuals Vs Leverage: There are a couple of higher leverage points, but it does not seem that any of them have a high Cook's distance (> 0.5), and thus are not very influential. This plot does not indicate any major concerns about influential outliers in the model.
+
+ 
+**5.Looking at scatterplots of the mpg against displacement (disp) and horse power (hp) shows curvature. Try fitting the model with disp, hp, drat, wt, qsec, and quadratic terms for disp and hp. Are either of  the quadratic terms significant at the 5% level? Construct residual plots to check the assumptions of linearity, constant variation and normality. What do you conclude about whether these assumptions are meet? (15 pts)**
+
+```{r quadratic, echo = FALSE}
+
+  model_quadratic <- lm(mpg ~ disp + I(disp^2) + hp + I(hp^2) + drat + wt + qsec, data = mtcars)
+
+  summary(model_quadratic)
+```
+
+The p-value for quadratic terms for disp is 0.01881 which is less than significance level 0.05 which indicates that the relationship between disp and the variables is non-linear, and quadratic terms are significant to the model. Whereas, and The p-value for quadratic terms for hp is 0.17094 which is greater than significance level 0.05, so we don't have enough evidence that the quadratic term for hp is significant to the model.
+
+```{r quadratic-plot, echo = FALSE}
+  par(mfrow = c(2, 2)) 
+  plot(model_quadratic)
+```
+The residual plotsindicate some problems of the assumptions of linear regression. The plot of residuals versus fitted indicates a possible violation of linearity since there is a pattern that is other than random, while the scale-location plot indicates heteroscedasticity since spread increases with increasing fitted values. However, though the normal Q-Q plot demonstrates some minor deviation from normality, this is no extreme end. Residuals vs. Leverage plot gives a few influential points that could disproportionately influence the model. On the whole, the linearity and variance assumption has been violated, but the normality was hardly affected.
+
+**6.Instead of a quadratic curve, what about a logarithmic curve? Try fitting the model with log(disp), log(hp), drat, wt, and qsec. Are either of  the log terms significant at the 5% level? Construct residual plots to check the assumptions of linearity, constant variation and normality. What do you conclude about whether these assumptions are meet? (15 pts)**
+```{r log, echo = FALSE}
+  model_log <- lm(mpg~log(disp) + log(hp) + drat + wt +qsec, data=mtcars)
+  summary(model)
+```
+
+The p value for both the disp and hp are 0.44281 and 0.18936 respectively. Both of the p-values are greater than the significance level 0.05, which means that we have no evidence that the log terms are significant at the 5% level. 
+ 
+```{r log-plot, echo = FALSE}
+  par(mfrow = c(2, 2))
+  plot(model_log)
+``` 
+
+The residual plots suggest that constant variance and normality are satisfied for the most part. One could note slight curvature in the residuals versus fitted plot, which would indicate a mild violation of linearity. On the Q-Q plot, there is a slight deviation from normality at the tail ends, but nothing too serious to speak of. The scale-location plot does nothing concerning constant variance since the spread of the residuals seems fairly consistent. However, from the residual versus leverage plot, there are a few points exhibiting a high leverage that may have an undue influence on the model.
+
+
+
+
+
+**7.Note that we also have some categorical variables in the data: cylinder (cyl), transmission type (am), engine shape (vs), number of forward gears (gear) and number of carburetors (carb). Let’s try adding cyl to our model with disp, hp, drat, wt, and qsec. Note that the levels of cyl are given as numbers; so you’ll need to wrap it in a factor command. Is the variable cyl significant at the 5% level? (You don’t need to include the assumption checks here, but you might want to look at them for yourself. Similarly, you can play around with trying indicators for the other categorical variables. Note: You won’t be able to use carb as a factor in its current form as you only have one observation for some of its levels.) (5 pts)**
+
+```{r cyl, echo = FALSE}
+  model <- lm(mpg ~ cyl + disp + hp + drat + wt + qsec, data = mtcars)
+  summary(model)
+```
+ 
+The P-values for cyl6 and cyl8 are 0.1697 and 0.4652 respectively. Those values are higher than significance level 0.05, so we cannot reject the null hypothesis.This means that, at the 5% significance level, the variable cyl (cylinder count) does not have a statistically significant effect on the response variable. 
+
+**8.We might also consider some interactions. Suppose we are interested in a possible interaction between horse power and weight. Try a regression of mpg against disp, hp, drat, wt, qsec, and the interaction between hp and wt. Is the interaction significant at the 5% level? (Again, you might try some other interactions yourself, but don’t need to include them.) (5 pts)**
+
+```{r interaction, echo = FALSE}
+interaction <- lm(mpg ~ disp + drat + qsec + hp * wt, data = mtcars)
+summary(interaction)
+```
+The p-value for the interaction between hp and wt is 0.00385 which is below the significant level of 5%.So, there is evidence that the interaction is statistically significant at the 5% level by rejecting the null hypothesis. 
+
+**9.With multiple variables and some multicollinearity, we might try all subsets regression. Do all possible subsets for the original variables disp, hp, drat, wt, qsec, quadratic terms for disp and hp, indicators for cyl, vs, am, gear, and the interaction between hp and wt. Using the values for AIC, what variables are in the preferred model? Is your model hierarchical? Run the regression for the chosen model. Are all the variables significant at the 5% level of significance?(15 pts)**
+
+```{r subsets-reg, echo = FALSE}
+  library(leaps)
+  allsub <- regsubsets(mpg~disp+hp+drat+wt+qsec+ I(disp^2) + I(hp^2) + cyl+vs+am+gear+hp*wt, data=mtcars )
+names(summary(allsub))
+summary(allsub)$which
+```
+
+```{r aic, echo = FALSE}
+ allout <-summary(allsub)
+n<-length(mtcars$mpg); m<-as.integer(row.names(allout$which))
+aic<-n*log(allout$rss)-n*log(n) + 2*(m+1)
+cbind(allout$which, "Adj R-sq"=allout$adjr2, "MSE"=allout$rss/(n-m-1), "Cp" = allout$cp, "AIC"=aic)
+```
+The model 6 has the lowest AIC value for 52.03, hence model 6 is the preferred model. The variables 
+in preferred model is hp, wt, qsec, cyl, gear, and interaction between hp and wt.
+
+Based on the variables in model #6, it appears that the model is not hierarchical. There are no obvious nested relationships between the variables. For example, the inclusion of hp doesn't necessarily imply the inclusion of cyl or gear.
+
+```{r pref_reg, echo = FALSE}
+  preferred_model <- lm(mpg~hp+wt+qsec+cyl+gear+hp*wt, data = mtcars)
+  summary(preferred_model)
+```
+The variable qsec, cyl, and gear are not significant at the 5% level of significance. 
+
+**10.Run stepwise regression with a full model that includes the original variables disp, hp, drat, wt, qsec, quadratic terms for disp and hp, indicators for cyl, vs, am, gear, and the interaction between hp and wt. Does it choose the same model as all subsets? Is it close in AIC value? (5pts)**
+
+```{r stepwise-reg, echo = FALSE}
+full_model <- mpg ~ disp + hp + drat + wt + qsec + I(disp^2) + I(hp^2) + cyl + vs + am + gear + hp:wt
+
+stepwise_model <- step(lm(full_model, data = mtcars))
+
+print(stepwise_model)
+```
+No, the stepwise regression of the full model doesn't choose the same model as all subsets.
+However, the AIC values are kind of close as all the subsets ranging between 50 to 70.
+ 
+**11.Write 2-4 paragraphs summarizing what you learned about these data. (15pts)**
+
+In this analysis, we see how different features of a car-engine displacement (disp), Horsepower (hp), Rear axle ratio (drat), Weight (wt), Acceleration (qsec)-are influencing mpg. First, we ran the multiple linear regression model and found that all the variables were significant enough to be a good predictor for mpg. Then, there was an issue of multicollinearity; most noticeably, a very strong linear relation between displacement and weight caused a problem in interpreting the coefficients correctly.
+
+We then fitted a reduced model which contained only weight and used a partial F-test to see if the other variables were needed. The test suggested that the other variables, disp, hp, drat, qsec are indeed needed. Residual plots verified that the assumptions of linearity and constant variance are approximately satisfied despite some minor concerns.
+
+Adding in quadratic terms for disp and hp showed that a nonlinear relationship between displacement and mpg was present, and the quadratic term for horse-power added little to the model. Trying logarithmic transformations did not pay off either. Finally, we considered the interaction of horse-power and weight, which was significant, indicating that the role of both variables with respect to mpg is more involved than a simple linear effect.
+
